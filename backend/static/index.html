@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>WebRTC Video Stream</title>
+    <style>
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      video {
+        width: 100%;
+        max-width: 640px;
+        margin-bottom: 20px;
+      }
+      .controls {
+        margin-bottom: 20px;
+      }
+      button {
+        margin: 5px;
+        padding: 8px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>WebRTC Video Stream</h1>
+      <video id="localVideo" autoplay playsinline></video>
+      <div class="controls">
+        <button id="startButton">Start Stream</button>
+        <button id="stopButton">Stop Stream</button>
+        <select id="transform">
+          <option value="none">No Filter</option>
+          <option value="grayscale">Grayscale</option>
+          <option value="edge">Edge Detection</option>
+        </select>
+      </div>
+    </div>
+
+    <script>
+      const localVideo = document.getElementById("localVideo");
+      const startButton = document.getElementById("startButton");
+      const stopButton = document.getElementById("stopButton");
+      const transformSelect = document.getElementById("transform");
+      let pc = null;
+
+      async function start() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+          localVideo.srcObject = stream;
+
+          pc = new RTCPeerConnection();
+
+          stream.getTracks().forEach((track) => {
+            pc.addTrack(track, stream);
+          });
+
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          const response = await fetch("/offer", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              sdp: pc.localDescription.sdp,
+              type: pc.localDescription.type,
+              transform: transformSelect.value,
+            }),
+          });
+
+          const answer = await response.json();
+          await pc.setRemoteDescription(answer);
+        } catch (e) {
+          console.error("Error starting stream:", e);
+        }
+      }
+
+      async function stop() {
+        if (pc) {
+          pc.close();
+          pc = null;
+        }
+        if (localVideo.srcObject) {
+          localVideo.srcObject.getTracks().forEach((track) => track.stop());
+          localVideo.srcObject = null;
+        }
+      }
+
+      startButton.addEventListener("click", start);
+      stopButton.addEventListener("click", stop);
+      transformSelect.addEventListener("change", async () => {
+        if (pc) {
+          await stop();
+          await start();
+        }
+      });
+    </script>
+  </body>
+</html>
