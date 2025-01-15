@@ -1,0 +1,11 @@
+uvicorn mainStatic:app --reload --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+npm run dev
+
+https://dev.to/wassafshahzad/building-real-time-communication-harnessing-webrtc-with-fastapi-part-1-ael
+https://github.com/priyanshu88064/video-calling-app/tree/main
+https://github.com/zoetaka38/fastapi-aiortc
+https://dev.to/whitphx/python-webrtc-basics-with-aiortc-48id
+https://medium.com/@malieknath135/building-a-real-time-streaming-application-using-webrtc-in-python-d34694604fc4
+https://www.youtube.com/live/pcRbE5F3PpY?si=C1dOGUR2fL9cbDc7
+https://github.com/YashMakan/flask_webrtc_youtube

@@ -1,0 +1,127 @@
+Add a debug view to show both original and processed streams:
+// Update the VideoStreaming.jsx component to show both streams
+
+const VideoStreaming = () => {
+  // ... existing state and refs ...
+  const debugVideoRef = useRef(null);  // Add this new ref for debug view
+
+  const startStream = async () => {
+    try {
+      setStatus('connecting');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      
+      // Show original stream in debug view
+      debugVideoRef.current.srcObject = stream;
+      videoRef.current.srcObject = stream;
+      
+      // ... rest of the code remains same
+    } catch (error) {
+      console.error('Error starting stream:', error);
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto p-4">
+      <Card>
+        {/* ... existing card header ... */}
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium mb-2">Original Stream</h3>
+                <video
+                  ref={debugVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full bg-gray-900 rounded-lg aspect-video"
+                />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium mb-2">Processed Stream</h3>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full bg-gray-900 rounded-lg aspect-video"
+                />
+              </div>
+            </div>
+            
+            {/* ... existing controls ... */}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+Add visual indicators and logging:
+// Add these state variables
+const [streamStats, setStreamStats] = useState({
+  resolution: '',
+  frameRate: 0,
+  bytesReceived: 0
+});
+
+// Add this function to monitor stream stats
+const monitorStream = () => {
+  if (peerConnectionRef.current) {
+    peerConnectionRef.current.getStats().then(stats => {
+      stats.forEach(report => {
+        if (report.type === 'inbound-rtp' && report.kind === 'video') {
+          setStreamStats({
+            resolution: `${report.frameWidth}x${report.frameHeight}`,
+            frameRate: Math.round(report.framesPerSecond),
+            bytesReceived: report.bytesReceived
+          });
+        }
+      });
+    });
+  }
+};
+
+// Add stats display to the UI
+<div className="mt-4 text-sm">
+  <div>Resolution: {streamStats.resolution}</div>
+  <div>Frame Rate: {streamStats.frameRate} FPS</div>
+  <div>Data Received: {Math.round(streamStats.bytesReceived / 1024)} KB</div>
+</div>
+
+// Set up stats monitoring
+useEffect(() => {
+  if (isStreaming) {
+    const interval = setInterval(monitorStream, 1000);
+    return () => clearInterval(interval);
+  }
+}, [isStreaming]);
+
+Add a simple snapshot feature:
+const takeSnapshot = () => {
+  if (videoRef.current) {
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoRef.current, 0, 0);
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.download = 'snapshot.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+};
+
+// Add snapshot button to UI
+<Button 
+  onClick={takeSnapshot} 
+  disabled={!isStreaming}
+  variant="outline"
+  className="flex items-center gap-2"
+>
+  <Camera className="h-4 w-4" />
+  Take Snapshot
+</Button>
+
+Ensure OpenCV filter are working
