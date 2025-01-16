@@ -119,6 +119,17 @@ async def offer(params: OfferModel):
     except Exception as e:
         logger.error(f"Error processing offer: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/check")
+async def check_stream():
+    return {
+        "active_connections": len(pcs),
+        "server_ip": {
+            "ipv4": "192.168.1.16",
+            "ipv6": "2401:4900:8815:e6ab:fef4:11ed:9e16:b1d5"
+        },
+        "status": "running"
+    }
 
 @app.on_event("shutdown")
 async def shutdown_event():
